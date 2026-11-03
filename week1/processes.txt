@@ -1,0 +1,58 @@
+postgres   32055       1  0 17:09 ?        00:00:00 /usr/pgsql-17/bin/postgres -D /var/lib/pgsql/17/data/
+postgres   32056   32055  0 17:09 ?        00:00:00  \_ postgres: logger 
+postgres   32057   32055  0 17:09 ?        00:00:00  \_ postgres: checkpointer 
+postgres   32058   32055  0 17:09 ?        00:00:00  \_ postgres: background writer 
+postgres   32060   32055  0 17:09 ?        00:00:00  \_ postgres: walwriter 
+postgres   32061   32055  0 17:09 ?        00:00:00  \_ postgres: autovacuum launcher 
+postgres   32062   32055  0 17:09 ?        00:00:00  \_ postgres: logical replication launcher 
+postgres   32812       1  0 17:10 ?        00:00:00 /usr/pgsql-17/bin/postgres -D /var/lib/pgsql/17/data2
+postgres   32813   32812  0 17:10 ?        00:00:00  \_ postgres: logger 
+postgres   32814   32812  0 17:10 ?        00:00:00  \_ postgres: checkpointer 
+postgres   32815   32812  0 17:10 ?        00:00:00  \_ postgres: background writer 
+postgres   32817   32812  0 17:10 ?        00:00:00  \_ postgres: walwriter 
+postgres   32818   32812  0 17:10 ?        00:00:00  \_ postgres: autovacuum launcher 
+postgres   32819   32812  0 17:10 ?        00:00:00  \_ postgres: logical replication launcher 
+  pid  |         backend_type         
+-------+------------------------------
+ 32061 | autovacuum launcher
+ 32058 | background writer
+ 32057 | checkpointer
+ 85331 | client backend
+ 32062 | logical replication launcher
+ 32060 | walwriter
+(6 rows)
+
+ shared_buffers 
+----------------
+ 128MB
+(1 row)
+
+base
+current_logfiles
+global
+log
+pg_commit_ts
+pg_dynshmem
+pg_hba.conf
+pg_ident.conf
+pg_logical
+pg_multixact
+pg_notify
+pg_replslot
+pg_serial
+pg_snapshots
+pg_stat
+pg_stat_tmp
+pg_subtrans
+pg_tblspc
+pg_twophase
+PG_VERSION
+pg_wal
+pg_xact
+postgresql.auto.conf
+postgresql.conf
+postmaster.opts
+postmaster.pid
+000000010000000000000001
+archive_status
+summaries
