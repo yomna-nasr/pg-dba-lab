@@ -1,0 +1,50 @@
+    1  exit
+    2  lsb_release -a
+    3  nproc && free -h && df -h /
+    4  dnf -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-$(rpm -E %rhel)-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+    5  dnf -qy module disable postgresql
+    6  dnf -y install postgresql17-server
+    7  /usr/pgsql-17/bin/postgresql-17-setup initdb
+    8  systemctl enable --now postgresql-17
+    9  systemctl status postgresql-17
+   10  su - postgres -c "psql -c 'SELECT version();'"
+   11  su - postgres -c "psql -c 'SHOW data_directory;'"
+   12  su - postgres -c "psql -c 'SHOW config_file;'"
+   13  systemctl status postgresql-17 --no-pager
+   14  systemctl restart postgresql-17
+   15  systemctl is-enabled postgresql-17
+   16  su - postgres
+   17  su - postgres -c "psql -p 5434 -c 'SHOW port;'"
+   18  ss -tlnp | grep postgres
+   19  cat > ~/pg-dba-lab/week1/native-install.md <<'EOF'
+# W1-T3 Native PostgreSQL install (RHEL)
+- PGDG repo, postgresql17-server, initdb via postgresql-17-setup
+- Service: systemctl enable --now postgresql-17 (active, enabled)
+- Data dir: /var/lib/pgsql/17/data
+- Config: /var/lib/pgsql/17/data/postgresql.conf
+- Second cluster: initdb -D /var/lib/pgsql/17/data2, port 5434, started with pg_ctl
+- Note: initdb defaults to trust auth for local connections; to be hardened in W1-T5
+EOF
+
+   20  history | tail -60 > ~/pg-dba-lab/week1/native-install-commands.txt
+   21  cd ~/pg-dba-lab && git add . && git commit -m "W1-T3 native install" && git push
+   22  mkdir -p ~/pg-dba-lab/{week1,week2,week3,week4,week5,week6,project}
+   23  cd ~/pg-dba-lab
+   24  for d in week* project; do touch $d/.gitkeep; done
+   25  git init -b main
+   26  dnf -y install git
+   27  mkdir -p ~/pg-dba-lab/{week1,week2,week3,week4,week5,week6,project}
+   28  cd ~/pg-dba-lab
+   29  for d in week* project; do touch $d/.gitkeep; done
+   30  git init -b main
+   31  cat > ~/pg-dba-lab/week1/native-install.md <<'EOF'
+# W1-T3 Native PostgreSQL install (RHEL)
+- PGDG repo, postgresql17-server, initdb via postgresql-17-setup
+- Service: systemctl enable --now postgresql-17 (active, enabled)
+- Data dir: /var/lib/pgsql/17/data
+- Config: /var/lib/pgsql/17/data/postgresql.conf
+- Second cluster: initdb -D /var/lib/pgsql/17/data2, port 5434, started with pg_ctl
+- Note: initdb defaults to trust auth for local connections; to be hardened in W1-T5
+EOF
+
+   32  history | tail -80 > ~/pg-dba-lab/week1/native-install-commands.txt
