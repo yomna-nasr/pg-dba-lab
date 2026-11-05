@@ -1,0 +1,16 @@
+=== PostgreSQL SSL and pgaudit settings ===
+ssl = on
+shared_preload_libraries = 'pgaudit'
+pgaudit.log = 'ddl, role'
+
+=== SSL-only TCP authentication rules ===
+115:hostssl    all             all             127.0.0.1/32            scram-sha-256
+117:hostssl    all             all             ::1/128                 scram-sha-256
+121:hostssl    replication     all             127.0.0.1/32            scram-sha-256
+122:hostssl    replication     all             ::1/128                 scram-sha-256
+
+=== pgaudit extension ===
+ extname | extversion
+---------+------------
+ pgaudit | 17.1
+(1 row)

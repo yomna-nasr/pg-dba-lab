@@ -1,0 +1,17 @@
+=== SSL configuration ===
+ ssl
+-----
+ on
+(1 row)
+
+
+=== Successful encrypted connection ===
+ ssl | version |         cipher
+-----+---------+------------------------
+ t   | TLSv1.3 | TLS_AES_256_GCM_SHA384
+(1 row)
+
+
+=== Non-SSL connection rejection ===
+psql: error: connection to server at "127.0.0.1", port 5432 failed: FATAL:  no pg_hba.conf entry for host "127.0.0.1", user "app_rw", database "appdb", no encryption
+PASS: Non-SSL connection rejected as expected.
