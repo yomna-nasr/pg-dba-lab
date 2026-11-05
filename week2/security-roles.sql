@@ -1,7 +1,7 @@
-CREATE ROLE app_owner LOGIN PASSWORD 'OwnerPass1';
-CREATE ROLE app_rw    LOGIN PASSWORD 'RwPass1';
-CREATE ROLE app_ro    LOGIN PASSWORD 'RoPass1';
-CREATE ROLE app_dba   LOGIN PASSWORD 'DbaPass1' CREATEROLE CREATEDB;
+CREATE ROLE app_owner LOGIN PASSWORD :'pw_owner';
+CREATE ROLE app_rw    LOGIN PASSWORD :'pw_rw';
+CREATE ROLE app_ro    LOGIN PASSWORD :'pw_ro';
+CREATE ROLE app_dba   LOGIN PASSWORD :'pw_dba' CREATEROLE CREATEDB;
 GRANT pg_monitor TO app_dba;
 
 CREATE DATABASE appdb OWNER app_owner;
