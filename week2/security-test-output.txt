@@ -1,0 +1,84 @@
+=== READ-ONLY USER (app_ro) ===
+
+[app_ro] SELECT count(*) FROM app.orders;
+ count 
+-------
+     4
+(1 row)
+
+
+[app_ro] INSERT INTO app.orders(branch,amount) VALUES ('x',1);
+ERROR:  permission denied for table orders
+
+[app_ro] UPDATE app.orders SET amount = 0 WHERE id = 999999;
+ERROR:  permission denied for table orders
+
+[app_ro] DELETE FROM app.orders WHERE id = 999999;
+ERROR:  permission denied for table orders
+
+[app_ro] CREATE TABLE app.hack(id int);
+ERROR:  permission denied for schema app
+LINE 1: CREATE TABLE app.hack(id int);
+                     ^
+
+[app_ro] CREATE TABLE public.hack(id int);
+ERROR:  permission denied for schema public
+LINE 1: CREATE TABLE public.hack(id int);
+                     ^
+
+=== READ-WRITE USER (app_rw) ===
+
+[app_rw] INSERT INTO app.orders(branch,amount) VALUES ('test',1);
+INSERT 0 1
+
+[app_rw] UPDATE app.orders SET amount = amount WHERE id = 1;
+UPDATE 1
+
+[app_rw] DELETE FROM app.orders WHERE branch = 'test';
+DELETE 1
+
+[app_rw] CREATE TABLE app.hack2(id int);
+ERROR:  permission denied for schema app
+LINE 1: CREATE TABLE app.hack2(id int);
+                     ^
+
+[app_rw] DROP TABLE app.orders;
+ERROR:  must be owner of table orders
+
+=== OWNER creates a new table, default privileges apply ===
+
+[app_owner] CREATE TABLE app.customers(id serial PRIMARY KEY, name text);
+CREATE TABLE
+
+[app_ro] SELECT * FROM app.customers;
+ id | name 
+----+------
+(0 rows)
+
+
+[app_ro] INSERT INTO app.customers(name) VALUES ('a');
+ERROR:  permission denied for table customers
+
+[app_rw] INSERT INTO app.customers(name) VALUES ('a');
+INSERT 0 1
+
+=== USER WITHOUT CONNECT (labuser2) ===
+
+[labuser2] SELECT 1;
+psql: error: connection to server at "127.0.0.1", port 5432 failed: FATAL:  permission denied for database "appdb"
+DETAIL:  User does not have CONNECT privilege.
+
+=== DBA ROLE (app_dba) ===
+
+[app_dba] CREATE ROLE tmp_test;
+CREATE ROLE
+
+[app_dba] DROP ROLE tmp_test;
+DROP ROLE
+
+[app_dba] SELECT count(*) FROM pg_stat_activity;
+ count 
+-------
+     6
+(1 row)
+
