@@ -1,0 +1,80 @@
+2026-11-11 17:15:35.595 EET [451110] LOG:  AUDIT: SESSION,8,1,DDL,CREATE INDEX,,,CREATE UNIQUE INDEX index_17938 ON repack.table_17930 USING btree (id),<not logged>
+2026-11-11 17:15:35.628 EET [451111] LOG:  AUDIT: SESSION,1,1,DDL,DROP TRIGGER,,,DROP TRIGGER IF EXISTS repack_trigger ON public.bloat_lab CASCADE,<not logged>
+2026-11-11 17:15:35.631 EET [451110] LOG:  AUDIT: SESSION,9,1,DDL,DROP TABLE,,,DROP TABLE IF EXISTS repack.log_17930 CASCADE,<not logged>
+2026-11-11 17:15:35.632 EET [451110] LOG:  AUDIT: SESSION,9,2,DDL,DROP TYPE,,,DROP TYPE IF EXISTS repack.pk_17930,<not logged>
+2026-11-11 17:15:35.632 EET [451110] LOG:  AUDIT: SESSION,9,3,DDL,DROP TRIGGER,,,DROP TRIGGER IF EXISTS repack_trigger ON public.bloat_lab CASCADE,<not logged>
+2026-11-11 17:15:35.632 EET [451110] LOG:  AUDIT: SESSION,9,4,DDL,DROP TABLE,,,DROP TABLE IF EXISTS repack.table_17930 CASCADE,<not logged>
+2026-11-11 17:16:05.345 EET [451349] LOG:  automatic analyze of table "mvcc_lab.pg_catalog.pg_depend"
+	avg read rate: 15.625 MB/s, avg write rate: 10.417 MB/s
+	buffer usage: 343 hits, 18 misses, 12 dirtied
+	system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+2026-11-11 17:17:41.441 EET [449944] WARNING:  there is no transaction in progress
+2026-11-11 17:19:00.094 EET [244507] LOG:  checkpoint complete: wrote 1545 buffers (9.4%); 0 WAL file(s) added, 0 removed, 16 recycled; write=270.018 s, sync=0.002 s, total=270.030 s; sync files=59, longest=0.001 s, average=0.001 s; distance=272572 kB, estimate=272572 kB; lsn=0/4271E3C8, redo lsn=0/40EA5190
+2026-11-11 17:20:50.512 EET [453175] LOG:  AUDIT: SESSION,1,1,DDL,ALTER SYSTEM,,,ALTER SYSTEM SET log_line_prefix = '%m [%p] %q%u@%d ',<not logged>
+2026-11-11 17:20:50.513 EET [453175] LOG:  AUDIT: SESSION,2,1,DDL,ALTER SYSTEM,,,ALTER SYSTEM SET log_min_duration_statement = '500ms',<not logged>
+2026-11-11 17:20:50.514 EET [453175] LOG:  AUDIT: SESSION,3,1,DDL,ALTER SYSTEM,,,ALTER SYSTEM SET log_lock_waits = on,<not logged>
+2026-11-11 17:20:50.515 EET [453175] LOG:  AUDIT: SESSION,4,1,DDL,ALTER SYSTEM,,,ALTER SYSTEM SET log_checkpoints = on,<not logged>
+2026-11-11 17:20:50.517 EET [453175] LOG:  AUDIT: SESSION,5,1,DDL,ALTER SYSTEM,,,ALTER SYSTEM SET auto_explain.log_min_duration = '500ms',<not logged>
+2026-11-11 17:20:50.518 EET [453175] LOG:  AUDIT: SESSION,6,1,DDL,ALTER SYSTEM,,,ALTER SYSTEM SET auto_explain.log_analyze = on,<not logged>
+2026-11-11 17:20:50.519 EET [453175] LOG:  AUDIT: SESSION,7,1,DDL,ALTER SYSTEM,,,ALTER SYSTEM SET pg_stat_statements.track = 'all',<not logged>
+2026-11-11 17:20:50.522 EET [453175] LOG:  AUDIT: SESSION,8,1,DDL,ALTER SYSTEM,,,"ALTER SYSTEM SET shared_preload_libraries = 'pgaudit,auto_explain,pg_stat_statements'",<not logged>
+2026-11-11 17:20:50.539 EET [244504] LOG:  received fast shutdown request
+2026-11-11 17:20:50.542 EET [244504] LOG:  aborting any active transactions
+2026-11-11 17:20:50.547 EET [244504] LOG:  background worker "logical replication launcher" (PID 244512) exited with exit code 1
+2026-11-11 17:20:50.550 EET [244507] LOG:  shutting down
+2026-11-11 17:20:50.551 EET [244507] LOG:  checkpoint starting: shutdown immediate
+2026-11-11 17:20:50.697 EET [244507] LOG:  checkpoint complete: wrote 2177 buffers (13.3%); 0 WAL file(s) added, 2 removed, 0 recycled; write=0.092 s, sync=0.048 s, total=0.148 s; sync files=60, longest=0.047 s, average=0.001 s; distance=25060 kB, estimate=247821 kB; lsn=0/4271E478, redo lsn=0/4271E478
+2026-11-11 17:20:50.724 EET [244504] LOG:  database system is shut down
+2026-11-11 17:36:21.112 EET [458697] LOG:  starting PostgreSQL 17.11 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 8.5.0 20210514 (Red Hat 8.5.0-28), 64-bit
+2026-11-11 17:36:21.114 EET [458697] LOG:  listening on IPv6 address "::1", port 5432
+2026-11-11 17:36:21.114 EET [458697] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2026-11-11 17:36:21.115 EET [458697] LOG:  listening on Unix socket "/run/postgresql/.s.PGSQL.5432"
+2026-11-11 17:36:21.117 EET [458697] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2026-11-11 17:36:21.120 EET [458701] LOG:  database system was shut down at 2026-11-11 17:20:50 EET
+2026-11-11 17:36:21.127 EET [458697] LOG:  database system is ready to accept connections
+2026-11-11 17:40:34.545 EET [460218] postgres@mvcc_lab WARNING:  there is already a transaction in progress
+2026-11-11 17:40:35.230 EET [460218] postgres@mvcc_lab WARNING:  there is already a transaction in progress
+2026-11-11 17:40:58.196 EET [460478] postgres@mvcc_lab LOG:  process 460478 still waiting for ShareLock on transaction 1467 after 1000.204 ms
+2026-11-11 17:40:58.196 EET [460478] postgres@mvcc_lab DETAIL:  Process holding the lock: 460218. Wait queue: 460478.
+2026-11-11 17:40:58.196 EET [460478] postgres@mvcc_lab CONTEXT:  while updating tuple (884,217) in relation "accounts"
+2026-11-11 17:40:58.196 EET [460478] postgres@mvcc_lab STATEMENT:  UPDATE accounts SET balance = 5 WHERE id = 1;
+2026-11-11 17:41:21.140 EET [458699] LOG:  checkpoint starting: time
+2026-11-11 17:41:21.848 EET [458699] LOG:  checkpoint complete: wrote 10 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.704 s, sync=0.002 s, total=0.708 s; sync files=8, longest=0.002 s, average=0.001 s; distance=19 kB, estimate=19 kB; lsn=0/42723470, redo lsn=0/42723410
+2026-11-11 17:42:05.699 EET [460218] postgres@mvcc_lab ERROR:  syntax error at or near "<" at character 26
+2026-11-11 17:42:05.699 EET [460218] postgres@mvcc_lab STATEMENT:  SELECT pg_cancel_backend(<blocked_pid>);
+2026-11-11 17:42:05.699 EET [460478] postgres@mvcc_lab LOG:  process 460478 acquired ShareLock on transaction 1467 after 68502.980 ms
+2026-11-11 17:42:05.699 EET [460478] postgres@mvcc_lab CONTEXT:  while updating tuple (884,217) in relation "accounts"
+2026-11-11 17:42:05.699 EET [460478] postgres@mvcc_lab STATEMENT:  UPDATE accounts SET balance = 5 WHERE id = 1;
+2026-11-11 17:42:05.700 EET [460478] postgres@mvcc_lab LOG:  duration: 68503.373 ms  plan:
+	Query Text: UPDATE accounts SET balance = 5 WHERE id = 1;
+	Update on accounts  (cost=0.42..8.44 rows=0 width=0) (actual time=68503.370..68503.371 rows=0 loops=1)
+	  ->  Index Scan using accounts_pkey on accounts  (cost=0.42..8.44 rows=1 width=10) (actual time=0.041..0.046 rows=1 loops=1)
+	        Index Cond: (id = 1)
+2026-11-11 17:42:05.700 EET [460478] postgres@mvcc_lab LOG:  duration: 68505.720 ms  statement: UPDATE accounts SET balance = 5 WHERE id = 1;
+2026-11-11 17:42:05.701 EET [460478] postgres@mvcc_lab ERROR:  syntax error at or near "<" at character 26
+2026-11-11 17:42:05.701 EET [460478] postgres@mvcc_lab STATEMENT:  SELECT pg_cancel_backend(<blocked_pid>);
+2026-11-11 17:44:08.196 EET [460649] postgres@mvcc_lab WARNING:  PID 2450 is not a PostgreSQL backend process
+2026-11-11 17:45:31.064 EET [460649] postgres@mvcc_lab WARNING:  PID 1234 is not a PostgreSQL backend process
+2026-11-11 17:45:36.999 EET [460649] postgres@mvcc_lab WARNING:  PID 5678 is not a PostgreSQL backend process
+2026-11-11 17:46:21.939 EET [458699] LOG:  checkpoint starting: time
+2026-11-11 17:46:22.545 EET [458699] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.603 s, sync=0.002 s, total=0.607 s; sync files=5, longest=0.002 s, average=0.001 s; distance=20 kB, estimate=20 kB; lsn=0/427284C8, redo lsn=0/42728470
+2026-11-11 17:50:11.646 EET [464174] postgres@mvcc_lab LOG:  duration: 1001.149 ms  plan:
+	Query Text: SELECT pg_sleep(1);
+	Result  (cost=0.00..0.01 rows=1 width=4) (actual time=1001.085..1001.086 rows=1 loops=1)
+2026-11-11 17:50:11.646 EET [464174] postgres@mvcc_lab LOG:  duration: 1002.170 ms  statement: SELECT pg_sleep(1);
+2026-11-11 17:53:33.706 EET [465487] postgres@mvcc_lab ERROR:  syntax error at or near "psql" at character 20
+2026-11-11 17:53:33.706 EET [465487] postgres@mvcc_lab STATEMENT:  SELECT pg_sleep(1);psql
+2026-11-11 17:53:34.709 EET [465487] postgres@mvcc_lab LOG:  duration: 1001.222 ms  plan:
+	Query Text: SELECT pg_sleep(1);
+	Result  (cost=0.00..0.01 rows=1 width=4) (actual time=1001.155..1001.157 rows=1 loops=1)
+2026-11-11 17:53:34.709 EET [465487] postgres@mvcc_lab LOG:  duration: 1002.232 ms  statement: SELECT pg_sleep(1);
+2026-11-11 17:55:29.153 EET [466219] postgres@mvcc_lab ERROR:  syntax error at or near "psql" at character 20
+2026-11-11 17:55:29.153 EET [466219] postgres@mvcc_lab STATEMENT:  SELECT pg_sleep(1);psql
+2026-11-11 17:55:30.155 EET [466219] postgres@mvcc_lab LOG:  duration: 1001.172 ms  plan:
+	Query Text: SELECT pg_sleep(1);
+	Result  (cost=0.00..0.01 rows=1 width=4) (actual time=1001.137..1001.138 rows=1 loops=1)
+2026-11-11 17:55:30.155 EET [466219] postgres@mvcc_lab LOG:  duration: 1002.061 ms  statement: SELECT pg_sleep(1);
+2026-11-11 17:56:32.452 EET [466608] postgres@mvcc_lab LOG:  duration: 1000.172 ms  plan:
+	Query Text: SELECT pg_sleep(1);
+	Result  (cost=0.00..0.01 rows=1 width=4) (actual time=1000.130..1000.132 rows=1 loops=1)
+2026-11-11 17:56:32.452 EET [466608] postgres@mvcc_lab LOG:  duration: 1001.134 ms  statement: SELECT pg_sleep(1);
