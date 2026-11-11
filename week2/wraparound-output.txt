@@ -1,0 +1,41 @@
+\timing on
+Timing is on.
+\x auto
+Expanded display is used automatically.
+\set PROMPT1 '%n@%/%R%# '
+SELECT datname, age(datfrozenxid) AS xid_age, round(100.0 * age(datfrozenxid) / 2147483647, 2) AS pct_of_limit FROM pg_database ORDER BY xid_age DESC;
+   datname   | xid_age | pct_of_limit 
+-------------+---------+--------------
+ postgres    |     713 |         0.00
+ template1   |     713 |         0.00
+ template0   |     713 |         0.00
+ pagila      |     713 |         0.00
+ pgbench_lab |     713 |         0.00
+ appdb       |     713 |         0.00
+ mvcc_lab    |     713 |         0.00
+(7 rows)
+
+Time: 2.595 ms
+SELECT c.oid::regclass AS table_name, age(c.relfrozenxid) AS xid_age, pg_size_pretty(pg_total_relation_size(c.oid)) AS size FROM pg_class c WHERE c.relkind IN ('r','m','t') ORDER BY age(c.relfrozenxid) DESC LIMIT 10;
+       table_name       | xid_age |    size    
+------------------------+---------+------------
+ pg_toast.pg_toast_3381 |     713 | 8192 bytes
+ pg_type                |     713 | 240 kB
+ pg_toast.pg_toast_1255 |     713 | 56 kB
+ pg_toast.pg_toast_1247 |     713 | 8192 bytes
+ pg_toast.pg_toast_2604 |     713 | 8192 bytes
+ pg_toast.pg_toast_2606 |     713 | 8192 bytes
+ pg_toast.pg_toast_2612 |     713 | 8192 bytes
+ pg_toast.pg_toast_2600 |     713 | 8192 bytes
+ pg_toast.pg_toast_2619 |     713 | 80 kB
+ pg_toast.pg_toast_3429 |     713 | 8192 bytes
+(10 rows)
+
+Time: 2.837 ms
+SHOW autovacuum_freeze_max_age;
+ autovacuum_freeze_max_age 
+---------------------------
+ 200000000
+(1 row)
+
+Time: 0.126 ms
