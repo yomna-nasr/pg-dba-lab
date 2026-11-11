@@ -1,2 +1,3 @@
 week1/sample-databases/
 *.env
+week1/docker/.env

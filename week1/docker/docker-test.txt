@@ -1,0 +1,24 @@
+=== 1. create data ===
+CREATE TABLE
+INSERT 0 1
+=== 2. remove container (volume kept) ===
+ Container pg17-docker  Stopping
+ Container pg17-docker  Stopped
+ Container pg17-docker  Removing
+ Container pg17-docker  Removed
+ Network docker_default  Removing
+ Network docker_default  Removed
+local     docker_pgdata
+=== 3. recreate container ===
+ Network docker_default  Creating
+ Network docker_default  Created
+ Container pg17-docker  Creating
+ Container pg17-docker  Created
+ Container pg17-docker  Starting
+ Container pg17-docker  Started
+=== 4. data still there ===
+ id |      note       
+----+-----------------
+  1 | before recreate
+(1 row)
+
