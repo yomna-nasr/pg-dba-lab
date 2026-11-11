@@ -1,0 +1,59 @@
+\timing on
+Timing is on.
+\x auto
+Expanded display is used automatically.
+\set PROMPT1 '%n@%/%R%# '
+\echo === TOP 10 BY TOTAL TIME
+=== TOP 10 BY TOTAL TIME
+SELECT d.datname, left(s.query, 60) AS query, s.calls, round(s.total_exec_time::numeric,1) AS total_ms, round(s.mean_exec_time::numeric,2) AS mean_ms FROM pg_stat_statements s JOIN pg_database d ON d.oid = s.dbid ORDER BY s.total_exec_time DESC LIMIT 10;
+   datname   |                            query                             | calls  | total_ms | mean_ms 
+-------------+--------------------------------------------------------------+--------+----------+---------
+ pgbench_lab | UPDATE pgbench_branches SET bbalance = bbalance + $1 WHERE b | 131257 |  29002.5 |    0.22
+ pgbench_lab | UPDATE pgbench_accounts SET abalance = abalance + $1 WHERE a | 131257 |  12305.9 |    0.09
+ pgbench_lab | UPDATE pgbench_tellers SET tbalance = tbalance + $1 WHERE ti | 131257 |   6357.8 |    0.05
+ pgbench_lab | SELECT abalance FROM pgbench_accounts WHERE aid = $1         | 131257 |   2035.8 |    0.02
+ pgbench_lab | INSERT INTO pgbench_history (tid, bid, aid, delta, mtime) VA | 131257 |   1596.7 |    0.01
+ pgbench_lab | END                                                          | 131257 |    225.7 |    0.00
+ pgbench_lab | BEGIN                                                        | 131257 |    213.2 |    0.00
+ pgbench_lab | vacuum pgbench_tellers                                       |      1 |      0.8 |    0.78
+ pgbench_lab | vacuum pgbench_branches                                      |      1 |      0.6 |    0.64
+ pgbench_lab | truncate pgbench_history                                     |      1 |      0.5 |    0.52
+(10 rows)
+
+Time: 4.890 ms
+\echo === TOP 10 BY MEAN TIME
+=== TOP 10 BY MEAN TIME
+SELECT d.datname, left(s.query, 60) AS query, s.calls, round(s.total_exec_time::numeric,1) AS total_ms, round(s.mean_exec_time::numeric,2) AS mean_ms FROM pg_stat_statements s JOIN pg_database d ON d.oid = s.dbid ORDER BY s.mean_exec_time DESC LIMIT 10;
+   datname   |                            query                             | calls  | total_ms | mean_ms 
+-------------+--------------------------------------------------------------+--------+----------+---------
+ pgbench_lab | vacuum pgbench_tellers                                       |      1 |      0.8 |    0.78
+ pgbench_lab | vacuum pgbench_branches                                      |      1 |      0.6 |    0.64
+ pgbench_lab | truncate pgbench_history                                     |      1 |      0.5 |    0.52
+ postgres    | SELECT d.datname, left(s.query, $1) AS query, s.calls, round |      1 |      0.4 |    0.38
+ pgbench_lab | select o.n, p.partstrat, pg_catalog.count(i.inhparent) from  |      1 |      0.3 |    0.31
+ pgbench_lab | UPDATE pgbench_branches SET bbalance = bbalance + $1 WHERE b | 131257 |  29002.5 |    0.22
+ postgres    | SELECT pg_stat_statements_reset()                            |      1 |      0.2 |    0.18
+ pgbench_lab | UPDATE pgbench_accounts SET abalance = abalance + $1 WHERE a | 131257 |  12305.9 |    0.09
+ pgbench_lab | select count(*) from pgbench_branches                        |      1 |      0.1 |    0.09
+ pgbench_lab | UPDATE pgbench_tellers SET tbalance = tbalance + $1 WHERE ti | 131257 |   6357.8 |    0.05
+(10 rows)
+
+Time: 0.703 ms
+\echo === TOP 10 BY CALLS
+=== TOP 10 BY CALLS
+SELECT d.datname, left(s.query, 60) AS query, s.calls, round(s.total_exec_time::numeric,1) AS total_ms, round(s.mean_exec_time::numeric,2) AS mean_ms FROM pg_stat_statements s JOIN pg_database d ON d.oid = s.dbid ORDER BY s.calls DESC LIMIT 10;
+   datname   |                            query                             | calls  | total_ms | mean_ms 
+-------------+--------------------------------------------------------------+--------+----------+---------
+ pgbench_lab | UPDATE pgbench_branches SET bbalance = bbalance + $1 WHERE b | 131257 |  29002.5 |    0.22
+ pgbench_lab | SELECT abalance FROM pgbench_accounts WHERE aid = $1         | 131257 |   2035.8 |    0.02
+ pgbench_lab | UPDATE pgbench_accounts SET abalance = abalance + $1 WHERE a | 131257 |  12305.9 |    0.09
+ pgbench_lab | BEGIN                                                        | 131257 |    213.2 |    0.00
+ pgbench_lab | INSERT INTO pgbench_history (tid, bid, aid, delta, mtime) VA | 131257 |   1596.7 |    0.01
+ pgbench_lab | END                                                          | 131257 |    225.7 |    0.00
+ pgbench_lab | UPDATE pgbench_tellers SET tbalance = tbalance + $1 WHERE ti | 131257 |   6357.8 |    0.05
+ postgres    | SELECT pg_stat_statements_reset()                            |      1 |      0.2 |    0.18
+ postgres    | SELECT d.datname, left(s.query, $1) AS query, s.calls, round |      1 |      0.4 |    0.38
+ pgbench_lab | select o.n, p.partstrat, pg_catalog.count(i.inhparent) from  |      1 |      0.3 |    0.31
+(10 rows)
+
+Time: 1.006 ms

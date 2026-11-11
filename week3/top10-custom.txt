@@ -1,0 +1,44 @@
+\timing on
+Timing is on.
+\x auto
+Expanded display is used automatically.
+\set PROMPT1 '%n@%/%R%# '
+\echo === TOP 10 BY TOTAL TIME
+=== TOP 10 BY TOTAL TIME
+SELECT d.datname, left(s.query, 60) AS query, s.calls, round(s.total_exec_time::numeric,1) AS total_ms, round(s.mean_exec_time::numeric,2) AS mean_ms FROM pg_stat_statements s JOIN pg_database d ON d.oid = s.dbid ORDER BY s.total_exec_time DESC LIMIT 10;
+ datname  |                            query                             | calls | total_ms | mean_ms 
+----------+--------------------------------------------------------------+-------+----------+---------
+ pagila   | SELECT f.title, count(*) AS rentals FROM film f JOIN invento |  1187 |  56732.6 |   47.79
+ pagila   | SELECT c.customer_id, sum(p.amount) AS total FROM customer c |  1187 |  47369.3 |   39.91
+ pagila   | SELECT count(*) FROM rental WHERE rental_date > $1           |  1187 |  10548.9 |    8.89
+ postgres | SELECT pg_stat_statements_reset()                            |     1 |      0.2 |    0.15
+(4 rows)
+
+Time: 3.396 ms
+\echo === TOP 10 BY MEAN TIME
+=== TOP 10 BY MEAN TIME
+SELECT d.datname, left(s.query, 60) AS query, s.calls, round(s.total_exec_time::numeric,1) AS total_ms, round(s.mean_exec_time::numeric,2) AS mean_ms FROM pg_stat_statements s JOIN pg_database d ON d.oid = s.dbid ORDER BY s.mean_exec_time DESC LIMIT 10;
+ datname  |                            query                             | calls | total_ms | mean_ms 
+----------+--------------------------------------------------------------+-------+----------+---------
+ pagila   | SELECT f.title, count(*) AS rentals FROM film f JOIN invento |  1187 |  56732.6 |   47.79
+ pagila   | SELECT c.customer_id, sum(p.amount) AS total FROM customer c |  1187 |  47369.3 |   39.91
+ pagila   | SELECT count(*) FROM rental WHERE rental_date > $1           |  1187 |  10548.9 |    8.89
+ postgres | SELECT d.datname, left(s.query, $1) AS query, s.calls, round |     1 |      0.3 |    0.27
+ postgres | SELECT pg_stat_statements_reset()                            |     1 |      0.2 |    0.15
+(5 rows)
+
+Time: 0.763 ms
+\echo === TOP 10 BY CALLS
+=== TOP 10 BY CALLS
+SELECT d.datname, left(s.query, 60) AS query, s.calls, round(s.total_exec_time::numeric,1) AS total_ms, round(s.mean_exec_time::numeric,2) AS mean_ms FROM pg_stat_statements s JOIN pg_database d ON d.oid = s.dbid ORDER BY s.calls DESC LIMIT 10;
+ datname  |                            query                             | calls | total_ms | mean_ms 
+----------+--------------------------------------------------------------+-------+----------+---------
+ pagila   | SELECT count(*) FROM rental WHERE rental_date > $1           |  1187 |  10548.9 |    8.89
+ pagila   | SELECT f.title, count(*) AS rentals FROM film f JOIN invento |  1187 |  56732.6 |   47.79
+ pagila   | SELECT c.customer_id, sum(p.amount) AS total FROM customer c |  1187 |  47369.3 |   39.91
+ postgres | SELECT d.datname, left(s.query, $1) AS query, s.calls, round |     1 |      0.2 |    0.16
+ postgres | SELECT pg_stat_statements_reset()                            |     1 |      0.2 |    0.15
+ postgres | SELECT d.datname, left(s.query, $1) AS query, s.calls, round |     1 |      0.3 |    0.27
+(6 rows)
+
+Time: 0.955 ms
