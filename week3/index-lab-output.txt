@@ -1,0 +1,244 @@
+\timing on
+Timing is on.
+\x auto
+Expanded display is used automatically.
+\set PROMPT1 '%n@%/%R%# '
+DROP TABLE IF EXISTS events;
+NOTICE:  table "events" does not exist, skipping
+DROP TABLE
+Time: 0.901 ms
+CREATE TABLE events (id int PRIMARY KEY, created_at timestamptz, user_id int, status text, payload jsonb, body text) WITH (autovacuum_enabled = false);
+CREATE TABLE
+Time: 8.209 ms
+INSERT INTO events SELECT g, now() - (g || ' seconds')::interval, g % 1000, CASE WHEN g % 100 = 0 THEN 'cancelled' ELSE 'paid' END, jsonb_build_object('user', g % 1000, 'tag', 'tag' || g % 50), 'Word' || g % 500 || ' sample text ' || g FROM generate_series(1,500000) g;
+INSERT 0 500000
+Time: 7910.572 ms (00:07.911)
+VACUUM ANALYZE events;
+VACUUM
+Time: 628.844 ms
+\echo === B-TREE before
+=== B-TREE before
+EXPLAIN (ANALYZE, COSTS OFF) SELECT * FROM events WHERE user_id = 42;
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
+ Gather (actual time=0.525..32.705 rows=500 loops=1)
+   Workers Planned: 2
+   Workers Launched: 2
+   ->  Parallel Seq Scan on events (actual time=0.183..21.517 rows=167 loops=3)
+         Filter: (user_id = 42)
+         Rows Removed by Filter: 166500
+ Planning Time: 0.268 ms
+ Execution Time: 32.804 ms
+(8 rows)
+
+Time: 33.573 ms
+CREATE INDEX CONCURRENTLY idx_events_user ON events (user_id);
+CREATE INDEX
+Time: 508.369 ms
+\echo === B-TREE after
+=== B-TREE after
+EXPLAIN (ANALYZE, COSTS OFF) SELECT * FROM events WHERE user_id = 42;
+                                       QUERY PLAN                                       
+----------------------------------------------------------------------------------------
+ Bitmap Heap Scan on events (actual time=0.246..1.185 rows=500 loops=1)
+   Recheck Cond: (user_id = 42)
+   Heap Blocks: exact=500
+   ->  Bitmap Index Scan on idx_events_user (actual time=0.119..0.120 rows=500 loops=1)
+         Index Cond: (user_id = 42)
+ Planning Time: 0.395 ms
+ Execution Time: 1.267 ms
+(7 rows)
+
+Time: 2.140 ms
+\echo === COVERING (INCLUDE) index only scan
+=== COVERING (INCLUDE) index only scan
+CREATE INDEX CONCURRENTLY idx_events_user_cov ON events (user_id) INCLUDE (created_at);
+CREATE INDEX
+Time: 625.877 ms
+EXPLAIN (ANALYZE, COSTS OFF) SELECT created_at FROM events WHERE user_id = 42;
+                                           QUERY PLAN                                            
+-------------------------------------------------------------------------------------------------
+ Index Only Scan using idx_events_user_cov on events (actual time=0.047..0.129 rows=500 loops=1)
+   Index Cond: (user_id = 42)
+   Heap Fetches: 0
+ Planning Time: 0.312 ms
+ Execution Time: 0.179 ms
+(5 rows)
+
+Time: 0.925 ms
+\echo === PARTIAL index
+=== PARTIAL index
+CREATE INDEX CONCURRENTLY idx_events_cancelled ON events (id) WHERE status = 'cancelled';
+CREATE INDEX
+Time: 126.832 ms
+EXPLAIN (ANALYZE, COSTS OFF) SELECT id FROM events WHERE status = 'cancelled';
+                                            QUERY PLAN                                             
+---------------------------------------------------------------------------------------------------
+ Index Only Scan using idx_events_cancelled on events (actual time=0.047..0.750 rows=5000 loops=1)
+   Heap Fetches: 0
+ Planning Time: 0.415 ms
+ Execution Time: 0.958 ms
+(4 rows)
+
+Time: 1.769 ms
+\echo === EXPRESSION index
+=== EXPRESSION index
+EXPLAIN (ANALYZE, COSTS OFF) SELECT * FROM events WHERE lower(body) = 'word7 sample text 7';
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
+ Gather (actual time=0.409..146.814 rows=1 loops=1)
+   Workers Planned: 2
+   Workers Launched: 2
+   ->  Parallel Seq Scan on events (actual time=90.787..137.937 rows=0 loops=3)
+         Filter: (lower(body) = 'word7 sample text 7'::text)
+         Rows Removed by Filter: 166666
+ Planning Time: 0.062 ms
+ Execution Time: 146.848 ms
+(8 rows)
+
+Time: 147.605 ms
+CREATE INDEX CONCURRENTLY idx_events_lower_body ON events (lower(body));
+CREATE INDEX
+Time: 4103.794 ms (00:04.104)
+EXPLAIN (ANALYZE, COSTS OFF) SELECT * FROM events WHERE lower(body) = 'word7 sample text 7';
+                                         QUERY PLAN                                         
+--------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on events (actual time=0.040..0.041 rows=1 loops=1)
+   Recheck Cond: (lower(body) = 'word7 sample text 7'::text)
+   Heap Blocks: exact=1
+   ->  Bitmap Index Scan on idx_events_lower_body (actual time=0.027..0.027 rows=1 loops=1)
+         Index Cond: (lower(body) = 'word7 sample text 7'::text)
+ Planning Time: 0.243 ms
+ Execution Time: 0.075 ms
+(7 rows)
+
+Time: 0.766 ms
+\echo === GIN jsonb
+=== GIN jsonb
+EXPLAIN (ANALYZE, COSTS OFF) SELECT count(*) FROM events WHERE payload @> '{"tag":"tag7"}';
+                                         QUERY PLAN                                          
+---------------------------------------------------------------------------------------------
+ Finalize Aggregate (actual time=55.282..59.919 rows=1 loops=1)
+   ->  Gather (actual time=55.089..59.911 rows=3 loops=1)
+         Workers Planned: 2
+         Workers Launched: 2
+         ->  Partial Aggregate (actual time=50.857..50.858 rows=1 loops=3)
+               ->  Parallel Seq Scan on events (actual time=0.023..50.523 rows=3333 loops=3)
+                     Filter: (payload @> '{"tag": "tag7"}'::jsonb)
+                     Rows Removed by Filter: 163333
+ Planning Time: 0.223 ms
+ Execution Time: 59.966 ms
+(10 rows)
+
+Time: 60.967 ms
+CREATE INDEX CONCURRENTLY idx_events_payload ON events USING gin (payload);
+CREATE INDEX
+Time: 2059.285 ms (00:02.059)
+EXPLAIN (ANALYZE, COSTS OFF) SELECT count(*) FROM events WHERE payload @> '{"tag":"tag7"}';
+                                            QUERY PLAN                                             
+---------------------------------------------------------------------------------------------------
+ Aggregate (actual time=23.318..23.319 rows=1 loops=1)
+   ->  Bitmap Heap Scan on events (actual time=9.444..22.681 rows=10000 loops=1)
+         Recheck Cond: (payload @> '{"tag": "tag7"}'::jsonb)
+         Heap Blocks: exact=7692
+         ->  Bitmap Index Scan on idx_events_payload (actual time=7.966..7.966 rows=10000 loops=1)
+               Index Cond: (payload @> '{"tag": "tag7"}'::jsonb)
+ Planning Time: 0.519 ms
+ Execution Time: 23.388 ms
+(8 rows)
+
+Time: 24.557 ms
+\echo === GIN full text
+=== GIN full text
+EXPLAIN (ANALYZE, COSTS OFF) SELECT count(*) FROM events WHERE to_tsvector('english', body) @@ to_tsquery('english', 'word7');
+                                          QUERY PLAN                                           
+-----------------------------------------------------------------------------------------------
+ Finalize Aggregate (actual time=1099.081..1103.494 rows=1 loops=1)
+   ->  Gather (actual time=1098.817..1103.485 rows=3 loops=1)
+         Workers Planned: 2
+         Workers Launched: 2
+         ->  Partial Aggregate (actual time=1092.477..1092.478 rows=1 loops=3)
+               ->  Parallel Seq Scan on events (actual time=3.039..1092.281 rows=333 loops=3)
+                     Filter: (to_tsvector('english'::regconfig, body) @@ '''word7'''::tsquery)
+                     Rows Removed by Filter: 166333
+ Planning Time: 1.136 ms
+ Execution Time: 1103.624 ms
+(10 rows)
+
+Time: 1105.955 ms (00:01.106)
+CREATE INDEX CONCURRENTLY idx_events_fts ON events USING gin (to_tsvector('english', body));
+CREATE INDEX
+Time: 7545.012 ms (00:07.545)
+EXPLAIN (ANALYZE, COSTS OFF) SELECT count(*) FROM events WHERE to_tsvector('english', body) @@ to_tsquery('english', 'word7');
+                                          QUERY PLAN                                          
+----------------------------------------------------------------------------------------------
+ Aggregate (actual time=2.662..2.664 rows=1 loops=1)
+   ->  Bitmap Heap Scan on events (actual time=0.632..2.553 rows=1000 loops=1)
+         Recheck Cond: (to_tsvector('english'::regconfig, body) @@ '''word7'''::tsquery)
+         Heap Blocks: exact=1000
+         ->  Bitmap Index Scan on idx_events_fts (actual time=0.373..0.374 rows=1000 loops=1)
+               Index Cond: (to_tsvector('english'::regconfig, body) @@ '''word7'''::tsquery)
+ Planning Time: 0.480 ms
+ Execution Time: 2.729 ms
+(8 rows)
+
+Time: 3.854 ms
+\echo === BRIN
+=== BRIN
+CREATE INDEX CONCURRENTLY idx_events_created_brin ON events USING brin (created_at);
+CREATE INDEX
+Time: 505.790 ms
+EXPLAIN (ANALYZE, COSTS OFF) SELECT count(*) FROM events WHERE created_at > now() - interval '1 hour';
+                                              QUERY PLAN                                               
+-------------------------------------------------------------------------------------------------------
+ Aggregate (actual time=3.065..3.067 rows=1 loops=1)
+   ->  Bitmap Heap Scan on events (actual time=0.073..2.724 rows=3574 loops=1)
+         Recheck Cond: (created_at > (now() - '01:00:00'::interval))
+         Rows Removed by Index Recheck: 4754
+         Heap Blocks: lossy=128
+         ->  Bitmap Index Scan on idx_events_created_brin (actual time=0.052..0.053 rows=1280 loops=1)
+               Index Cond: (created_at > (now() - '01:00:00'::interval))
+ Planning Time: 0.487 ms
+ Execution Time: 3.129 ms
+(9 rows)
+
+Time: 4.394 ms
+CREATE INDEX CONCURRENTLY idx_events_created_btree ON events (created_at);
+CREATE INDEX
+Time: 510.761 ms
+SELECT indexrelname, pg_size_pretty(pg_relation_size(indexrelid)) AS size FROM pg_stat_user_indexes WHERE indexrelname IN ('idx_events_created_brin','idx_events_created_btree');
+       indexrelname       | size  
+--------------------------+-------
+ idx_events_created_brin  | 24 kB
+ idx_events_created_btree | 11 MB
+(2 rows)
+
+Time: 5.140 ms
+\echo === DUPLICATE index and unused index checks
+=== DUPLICATE index and unused index checks
+CREATE INDEX CONCURRENTLY idx_events_user_dup ON events (user_id);
+CREATE INDEX
+Time: 489.064 ms
+SELECT indrelid::regclass AS tbl, array_agg(indexrelid::regclass) AS duplicates FROM pg_index GROUP BY indrelid, indkey::text, indclass::text, coalesce(indpred::text,''), coalesce(indexprs::text,'') HAVING count(*) > 1;
+  tbl   |              duplicates               
+--------+---------------------------------------
+ events | {idx_events_user,idx_events_user_dup}
+(1 row)
+
+Time: 2.237 ms
+SELECT indexrelname, idx_scan, pg_size_pretty(pg_relation_size(indexrelid)) AS size FROM pg_stat_user_indexes WHERE relname = 'events' ORDER BY idx_scan, pg_relation_size(indexrelid) DESC;
+       indexrelname       | idx_scan |  size   
+--------------------------+----------+---------
+ idx_events_created_btree |        0 | 11 MB
+ events_pkey              |        0 | 11 MB
+ idx_events_user_dup      |        0 | 3600 kB
+ idx_events_fts           |        1 | 29 MB
+ idx_events_lower_body    |        1 | 24 MB
+ idx_events_user_cov      |        1 | 15 MB
+ idx_events_payload       |        1 | 4696 kB
+ idx_events_user          |        1 | 3600 kB
+ idx_events_cancelled     |        1 | 128 kB
+ idx_events_created_brin  |        1 | 24 kB
+(10 rows)
+
+Time: 2.695 ms
