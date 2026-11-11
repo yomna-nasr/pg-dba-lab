@@ -1,0 +1,262 @@
+\timing on
+Timing is on.
+\x auto
+Expanded display is used automatically.
+\set PROMPT1 '%n@%/%R%# '
+\echo === 1 BEFORE: bad row estimate (no statistics)
+=== 1 BEFORE: bad row estimate (no statistics)
+EXPLAIN (ANALYZE, BUFFERS) SELECT count(*) FROM orders WHERE amount > 990;
+                                                               QUERY PLAN                                                               
+----------------------------------------------------------------------------------------------------------------------------------------
+ Finalize Aggregate  (cost=12324.66..12324.67 rows=1 width=8) (actual time=81.602..86.486 rows=1 loops=1)
+   Buffers: shared hit=6370
+   ->  Gather  (cost=12324.44..12324.65 rows=2 width=8) (actual time=81.398..86.477 rows=3 loops=1)
+         Workers Planned: 2
+         Workers Launched: 2
+         Buffers: shared hit=6370
+         ->  Partial Aggregate  (cost=11324.44..11324.45 rows=1 width=8) (actual time=77.111..77.113 rows=1 loops=3)
+               Buffers: shared hit=6370
+               ->  Parallel Seq Scan on orders  (cost=0.00..11014.79 rows=123861 width=0) (actual time=0.082..76.624 rows=3379 loops=3)
+                     Filter: (amount > '990'::numeric)
+                     Rows Removed by Filter: 329955
+                     Buffers: shared hit=6370
+ Planning:
+   Buffers: shared hit=61 read=1
+ Planning Time: 0.696 ms
+ Execution Time: 86.677 ms
+(16 rows)
+
+Time: 89.668 ms
+ANALYZE orders;
+ANALYZE
+Time: 177.015 ms
+ANALYZE customers;
+ANALYZE
+Time: 242.522 ms
+\echo === 1 AFTER: statistics collected
+=== 1 AFTER: statistics collected
+EXPLAIN (ANALYZE, BUFFERS) SELECT count(*) FROM orders WHERE amount > 990;
+                                                              QUERY PLAN                                                              
+--------------------------------------------------------------------------------------------------------------------------------------
+ Finalize Aggregate  (cost=12588.88..12588.89 rows=1 width=8) (actual time=65.664..70.200 rows=1 loops=1)
+   Buffers: shared hit=6370
+   ->  Gather  (cost=12588.67..12588.88 rows=2 width=8) (actual time=65.497..70.190 rows=3 loops=1)
+         Workers Planned: 2
+         Workers Launched: 2
+         Buffers: shared hit=6370
+         ->  Partial Aggregate  (cost=11588.67..11588.68 rows=1 width=8) (actual time=61.433..61.434 rows=1 loops=3)
+               Buffers: shared hit=6370
+               ->  Parallel Seq Scan on orders  (cost=0.00..11578.33 rows=4134 width=0) (actual time=0.038..61.041 rows=3379 loops=3)
+                     Filter: (amount > '990'::numeric)
+                     Rows Removed by Filter: 329955
+                     Buffers: shared hit=6370
+ Planning:
+   Buffers: shared hit=17
+ Planning Time: 0.239 ms
+ Execution Time: 70.252 ms
+(16 rows)
+
+Time: 70.977 ms
+\echo === 2 BEFORE: seq scan on customer_id
+=== 2 BEFORE: seq scan on customer_id
+EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM orders WHERE customer_id = 4242;
+                                                     QUERY PLAN                                                      
+---------------------------------------------------------------------------------------------------------------------
+ Gather  (cost=1000.00..12579.43 rows=11 width=22) (actual time=6.701..47.388 rows=9 loops=1)
+   Workers Planned: 2
+   Workers Launched: 2
+   Buffers: shared hit=6370
+   ->  Parallel Seq Scan on orders  (cost=0.00..11578.33 rows=5 width=22) (actual time=3.632..39.192 rows=3 loops=3)
+         Filter: (customer_id = 4242)
+         Rows Removed by Filter: 333330
+         Buffers: shared hit=6370
+ Planning:
+   Buffers: shared hit=14
+ Planning Time: 0.153 ms
+ Execution Time: 47.430 ms
+(12 rows)
+
+Time: 48.327 ms
+CREATE INDEX idx_orders_customer ON orders (customer_id);
+CREATE INDEX
+Time: 719.398 ms
+\echo === 2 AFTER: index added
+=== 2 AFTER: index added
+EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM orders WHERE customer_id = 4242;
+                                                         QUERY PLAN                                                          
+-----------------------------------------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on orders  (cost=4.51..47.28 rows=11 width=22) (actual time=0.102..0.120 rows=9 loops=1)
+   Recheck Cond: (customer_id = 4242)
+   Heap Blocks: exact=9
+   Buffers: shared hit=9 read=3
+   ->  Bitmap Index Scan on idx_orders_customer  (cost=0.00..4.51 rows=11 width=0) (actual time=0.083..0.084 rows=9 loops=1)
+         Index Cond: (customer_id = 4242)
+         Buffers: shared read=3
+ Planning:
+   Buffers: shared hit=16 read=1
+ Planning Time: 0.246 ms
+ Execution Time: 0.168 ms
+(11 rows)
+
+Time: 0.799 ms
+\echo === 3 BEFORE: nested loop over a large set (hash and merge join disabled)
+=== 3 BEFORE: nested loop over a large set (hash and merge join disabled)
+SET enable_hashjoin = off;
+SET
+Time: 0.159 ms
+SET enable_mergejoin = off;
+SET
+Time: 0.211 ms
+EXPLAIN (ANALYZE, BUFFERS) SELECT count(*) FROM orders o JOIN customers c ON c.id = o.customer_id WHERE o.amount > 500;
+                                                                                  QUERY PLAN                                                                                  
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Finalize Aggregate  (cost=46252.05..46252.06 rows=1 width=8) (actual time=490.429..495.882 rows=1 loops=1)
+   Buffers: shared hit=1299468 read=1132
+   ->  Gather  (cost=46251.83..46252.04 rows=2 width=8) (actual time=490.408..495.874 rows=3 loops=1)
+         Workers Planned: 2
+         Workers Launched: 2
+         Buffers: shared hit=1299468 read=1132
+         ->  Partial Aggregate  (cost=45251.83..45251.84 rows=1 width=8) (actual time=485.049..485.051 rows=1 loops=3)
+               Buffers: shared hit=1299468 read=1132
+               ->  Nested Loop  (cost=0.72..44726.29 rows=210215 width=0) (actual time=0.140..469.333 rows=166791 loops=3)
+                     Buffers: shared hit=1299468 read=1132
+                     ->  Parallel Index Only Scan using customers_pkey on customers c  (cost=0.29..2840.96 rows=41667 width=4) (actual time=0.052..17.056 rows=33333 loops=3)
+                           Heap Fetches: 100000
+                           Buffers: shared hit=1361
+                     ->  Index Scan using idx_orders_customer on orders o  (cost=0.42..0.95 rows=6 width=4) (actual time=0.004..0.012 rows=5 loops=100000)
+                           Index Cond: (customer_id = c.id)
+                           Filter: (amount > '500'::numeric)
+                           Rows Removed by Filter: 5
+                           Buffers: shared hit=1298107 read=1132
+ Planning:
+   Buffers: shared hit=45
+ Planning Time: 0.384 ms
+ Execution Time: 495.949 ms
+(22 rows)
+
+Time: 496.952 ms
+RESET enable_hashjoin;
+RESET
+Time: 0.162 ms
+RESET enable_mergejoin;
+RESET
+Time: 0.121 ms
+\echo === 3 AFTER: planner free to choose
+=== 3 AFTER: planner free to choose
+EXPLAIN (ANALYZE, BUFFERS) SELECT count(*) FROM orders o JOIN customers c ON c.id = o.customer_id WHERE o.amount > 500;
+                                                                    QUERY PLAN                                                                    
+--------------------------------------------------------------------------------------------------------------------------------------------------
+ Finalize Aggregate  (cost=16722.92..16722.93 rows=1 width=8) (actual time=210.176..215.150 rows=1 loops=1)
+   Buffers: shared hit=8985
+   ->  Gather  (cost=16722.71..16722.92 rows=2 width=8) (actual time=208.510..215.141 rows=3 loops=1)
+         Workers Planned: 2
+         Workers Launched: 2
+         Buffers: shared hit=8985
+         ->  Partial Aggregate  (cost=15722.71..15722.72 rows=1 width=8) (actual time=204.204..204.207 rows=1 loops=3)
+               Buffers: shared hit=8985
+               ->  Hash Join  (cost=3067.00..15197.17 rows=210215 width=0) (actual time=41.348..191.033 rows=166791 loops=3)
+                     Hash Cond: (o.customer_id = c.id)
+                     Buffers: shared hit=8985
+                     ->  Parallel Seq Scan on orders o  (cost=0.00..11578.33 rows=210215 width=4) (actual time=0.024..74.950 rows=166791 loops=3)
+                           Filter: (amount > '500'::numeric)
+                           Rows Removed by Filter: 166543
+                           Buffers: shared hit=6370
+                     ->  Hash  (cost=1817.00..1817.00 rows=100000 width=4) (actual time=40.597..40.598 rows=100000 loops=3)
+                           Buckets: 131072  Batches: 1  Memory Usage: 4540kB
+                           Buffers: shared hit=2451
+                           ->  Seq Scan on customers c  (cost=0.00..1817.00 rows=100000 width=4) (actual time=0.039..16.392 rows=100000 loops=3)
+                                 Buffers: shared hit=2451
+ Planning:
+   Buffers: shared hit=26
+ Planning Time: 0.416 ms
+ Execution Time: 215.227 ms
+(24 rows)
+
+Time: 216.122 ms
+\echo === 4 BEFORE: sort spilling to disk (work_mem 1MB)
+=== 4 BEFORE: sort spilling to disk (work_mem 1MB)
+SET work_mem = '1MB';
+SET
+Time: 0.193 ms
+EXPLAIN (ANALYZE, BUFFERS) SELECT id, amount FROM orders ORDER BY amount;
+                                                             QUERY PLAN                                                              
+-------------------------------------------------------------------------------------------------------------------------------------
+ Gather Merge  (cost=64674.50..161903.59 rows=833334 width=10) (actual time=335.235..797.321 rows=1000000 loops=1)
+   Workers Planned: 2
+   Workers Launched: 2
+   Buffers: shared hit=6482, temp read=5148 written=5204
+   ->  Sort  (cost=63674.48..64716.15 rows=416667 width=10) (actual time=329.156..437.636 rows=333333 loops=3)
+         Sort Key: amount
+         Sort Method: external merge  Disk: 7192kB
+         Buffers: shared hit=6482, temp read=5148 written=5204
+         Worker 0:  Sort Method: external merge  Disk: 6728kB
+         Worker 1:  Sort Method: external merge  Disk: 6696kB
+         ->  Parallel Seq Scan on orders  (cost=0.00..10536.67 rows=416667 width=10) (actual time=0.026..56.177 rows=333333 loops=3)
+               Buffers: shared hit=6370
+ Planning:
+   Buffers: shared hit=6
+ Planning Time: 0.116 ms
+ Execution Time: 859.823 ms
+(16 rows)
+
+Time: 860.652 ms
+SET work_mem = '256MB';
+SET
+Time: 0.196 ms
+\echo === 4 AFTER: work_mem 256MB
+=== 4 AFTER: work_mem 256MB
+EXPLAIN (ANALYZE, BUFFERS) SELECT id, amount FROM orders ORDER BY amount;
+                                                       QUERY PLAN                                                        
+-------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=116027.84..118527.84 rows=1000000 width=10) (actual time=828.493..1009.811 rows=1000000 loops=1)
+   Sort Key: amount
+   Sort Method: quicksort  Memory: 55826kB
+   Buffers: shared hit=6370
+   ->  Seq Scan on orders  (cost=0.00..16370.00 rows=1000000 width=10) (actual time=0.027..149.906 rows=1000000 loops=1)
+         Buffers: shared hit=6370
+ Planning Time: 0.101 ms
+ Execution Time: 1061.913 ms
+(8 rows)
+
+Time: 1062.393 ms (00:01.062)
+RESET work_mem;
+RESET
+Time: 0.262 ms
+\echo === 5 BEFORE: function on a column prevents index use
+=== 5 BEFORE: function on a column prevents index use
+EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM customers WHERE lower(email) = 'user500@example.com';
+                                                QUERY PLAN                                                
+----------------------------------------------------------------------------------------------------------
+ Seq Scan on customers  (cost=0.00..2317.00 rows=500 width=31) (actual time=0.458..68.603 rows=1 loops=1)
+   Filter: (lower(email) = 'user500@example.com'::text)
+   Rows Removed by Filter: 99999
+   Buffers: shared hit=817
+ Planning:
+   Buffers: shared hit=14
+ Planning Time: 0.122 ms
+ Execution Time: 68.635 ms
+(8 rows)
+
+Time: 69.517 ms
+CREATE INDEX idx_customers_lower_email ON customers (lower(email));
+CREATE INDEX
+Time: 712.894 ms
+\echo === 5 AFTER: expression index
+=== 5 AFTER: expression index
+EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM customers WHERE lower(email) = 'user500@example.com';
+                                                             QUERY PLAN                                                              
+-------------------------------------------------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on customers  (cost=16.29..769.09 rows=500 width=31) (actual time=0.061..0.062 rows=1 loops=1)
+   Recheck Cond: (lower(email) = 'user500@example.com'::text)
+   Heap Blocks: exact=1
+   Buffers: shared hit=1 read=3
+   ->  Bitmap Index Scan on idx_customers_lower_email  (cost=0.00..16.17 rows=500 width=0) (actual time=0.049..0.050 rows=1 loops=1)
+         Index Cond: (lower(email) = 'user500@example.com'::text)
+         Buffers: shared read=3
+ Planning:
+   Buffers: shared hit=18 read=1
+ Planning Time: 0.347 ms
+ Execution Time: 0.098 ms
+(11 rows)
+
+Time: 0.834 ms
