@@ -1,0 +1,125 @@
+\timing on
+Timing is on.
+\x auto
+Expanded display is used automatically.
+\set PROMPT1 '%n@%/%R%# '
+CREATE EXTENSION IF NOT EXISTS pgstattuple;
+CREATE EXTENSION
+Time: 12.753 ms
+CREATE EXTENSION IF NOT EXISTS pageinspect;
+CREATE EXTENSION
+Time: 13.198 ms
+DROP TABLE IF EXISTS accounts;
+NOTICE:  table "accounts" does not exist, skipping
+DROP TABLE
+Time: 0.314 ms
+CREATE TABLE accounts (id int PRIMARY KEY, balance int) WITH (autovacuum_enabled = false);
+CREATE TABLE
+Time: 5.111 ms
+INSERT INTO accounts SELECT g, 100 FROM generate_series(1,100000) g;
+INSERT 0 100000
+Time: 523.199 ms
+ANALYZE accounts;
+ANALYZE
+Time: 28.549 ms
+\echo === row before update
+=== row before update
+SELECT ctid, xmin, xmax, * FROM accounts WHERE id = 1;
+ ctid  | xmin | xmax | id | balance 
+-------+------+------+----+---------
+ (0,1) | 1433 |    0 |  1 |     100
+(1 row)
+
+Time: 0.684 ms
+UPDATE accounts SET balance = balance + 1 WHERE id = 1;
+UPDATE 1
+Time: 0.749 ms
+\echo === row after update (new version)
+=== row after update (new version)
+SELECT ctid, xmin, xmax, * FROM accounts WHERE id = 1;
+   ctid    | xmin | xmax | id | balance 
+-----------+------+------+----+---------
+ (442,109) | 1435 |    0 |  1 |     101
+(1 row)
+
+Time: 0.213 ms
+\echo === old version still on the page
+=== old version still on the page
+SELECT lp, t_xmin, t_xmax, t_ctid FROM heap_page_items(get_raw_page('accounts', 0)) WHERE lp = 1;
+ lp | t_xmin | t_xmax | t_ctid 
+----+--------+--------+--------
+  1 |        |        | 
+(1 row)
+
+Time: 0.574 ms
+SELECT pg_size_pretty(pg_relation_size('accounts')) AS size_start;
+ size_start 
+------------
+ 3544 kB
+(1 row)
+
+Time: 0.402 ms
+UPDATE accounts SET balance = balance + 1;
+UPDATE 100000
+Time: 1443.323 ms (00:01.443)
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+Time: 2002.738 ms (00:02.003)
+\echo === dead tuples after updating every row
+=== dead tuples after updating every row
+SELECT n_live_tup, n_dead_tup FROM pg_stat_user_tables WHERE relname = 'accounts';
+ n_live_tup | n_dead_tup 
+------------+------------
+     200000 |     100001
+(1 row)
+
+Time: 5.178 ms
+SELECT tuple_count, dead_tuple_count, round(dead_tuple_percent::numeric,1) AS dead_pct, pg_size_pretty(table_len) AS size FROM pgstattuple('accounts');
+ tuple_count | dead_tuple_count | dead_pct |  size   
+-------------+------------------+----------+---------
+      100000 |           100000 |     44.1 | 7080 kB
+(1 row)
+
+Time: 29.601 ms
+VACUUM accounts;
+VACUUM
+Time: 101.462 ms
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+Time: 2002.565 ms (00:02.003)
+\echo === after VACUUM
+=== after VACUUM
+SELECT n_live_tup, n_dead_tup FROM pg_stat_user_tables WHERE relname = 'accounts';
+ n_live_tup | n_dead_tup 
+------------+------------
+     100000 |          0
+(1 row)
+
+Time: 1.333 ms
+SELECT tuple_count, dead_tuple_count, round(free_percent::numeric,1) AS free_pct, pg_size_pretty(table_len) AS size FROM pgstattuple('accounts');
+ tuple_count | dead_tuple_count | free_pct |  size   
+-------------+------------------+----------+---------
+      100000 |                0 |     50.0 | 7080 kB
+(1 row)
+
+Time: 11.097 ms
+VACUUM FULL accounts;
+VACUUM
+Time: 406.563 ms
+\echo === after VACUUM FULL
+=== after VACUUM FULL
+SELECT pg_size_pretty(pg_relation_size('accounts')) AS size_after_full;
+ size_after_full 
+-----------------
+ 3544 kB
+(1 row)
+
+Time: 0.367 ms
