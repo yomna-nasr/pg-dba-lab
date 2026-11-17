@@ -1,0 +1,13 @@
+Timing is on.
+Expanded display is used automatically.
+             name             | setting | unit 
+------------------------------+---------+------
+ checkpoint_completion_target | 0.9     | 
+ effective_cache_size         | 524288  | 8kB
+ maintenance_work_mem         | 65536   | kB
+ max_wal_size                 | 1024    | MB
+ shared_buffers               | 16384   | 8kB
+ work_mem                     | 16384   | kB
+(6 rows)
+
+Time: 7.796 ms
