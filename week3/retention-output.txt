@@ -1,0 +1,34 @@
+\timing on
+Timing is on.
+\x auto
+Expanded display is used automatically.
+\set PROMPT1 '%n@%/%R%# '
+CREATE OR REPLACE FUNCTION drop_old_partitions(keep_months int) RETURNS void LANGUAGE plpgsql AS $$
+DECLARE r record;
+BEGIN
+  FOR r IN SELECT c.relname FROM pg_inherits i JOIN pg_class c ON c.oid = i.inhrelid WHERE i.inhparent = 'sales'::regclass AND to_date(substr(c.relname, 7), 'YYYY_MM') < date_trunc('month', current_date) - make_interval(months => keep_months)
+  LOOP
+    EXECUTE format('DROP TABLE %I', r.relname);
+  END LOOP;
+END $$;
+CREATE FUNCTION
+Time: 4.144 ms
+SELECT drop_old_partitions(7);
+ drop_old_partitions 
+---------------------
+ 
+(1 row)
+
+Time: 20.940 ms
+\d+ sales
+                                       Partitioned table "public.sales"
+ Column  |     Type     | Collation | Nullable | Default | Storage  | Compression | Stats target | Description 
+---------+--------------+-----------+----------+---------+----------+-------------+--------------+-------------
+ id      | bigint       |           |          |         | plain    |             |              | 
+ sold_at | date         |           | not null |         | plain    |             |              | 
+ region  | text         |           |          |         | extended |             |              | 
+ amount  | numeric(8,2) |           |          |         | main     |             |              | 
+Partition key: RANGE (sold_at)
+Partitions: sales_2026_04 FOR VALUES FROM ('2026-04-01') TO ('2026-05-01'),
+            sales_2026_05 FOR VALUES FROM ('2026-05-01') TO ('2026-06-01')
+

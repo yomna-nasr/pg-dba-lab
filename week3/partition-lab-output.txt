@@ -1,0 +1,152 @@
+\timing on
+Timing is on.
+\x auto
+Expanded display is used automatically.
+\set PROMPT1 '%n@%/%R%# '
+DROP TABLE IF EXISTS sales_flat;
+NOTICE:  table "sales_flat" does not exist, skipping
+DROP TABLE
+Time: 1.113 ms
+DROP TABLE IF EXISTS sales CASCADE;
+NOTICE:  table "sales" does not exist, skipping
+DROP TABLE
+Time: 0.215 ms
+CREATE TABLE sales_flat (id bigserial, sold_at date NOT NULL, region text, amount numeric(8,2));
+CREATE TABLE
+Time: 9.897 ms
+INSERT INTO sales_flat (sold_at, region, amount) SELECT date '2026-01-01' + (g % 150), 'r' || (g % 10), (random() * 500)::numeric(8,2) FROM generate_series(1,1000000) g;
+INSERT 0 1000000
+Time: 7224.822 ms (00:07.225)
+CREATE TABLE sales (id bigint, sold_at date NOT NULL, region text, amount numeric(8,2)) PARTITION BY RANGE (sold_at);
+CREATE TABLE
+Time: 1.644 ms
+CREATE TABLE sales_2026_01 PARTITION OF sales FOR VALUES FROM ('2026-01-01') TO ('2026-02-01');
+CREATE TABLE
+Time: 3.501 ms
+CREATE TABLE sales_2026_02 PARTITION OF sales FOR VALUES FROM ('2026-02-01') TO ('2026-03-01');
+CREATE TABLE
+Time: 2.068 ms
+CREATE TABLE sales_2026_03 PARTITION OF sales FOR VALUES FROM ('2026-03-01') TO ('2026-04-01');
+CREATE TABLE
+Time: 2.010 ms
+CREATE TABLE sales_2026_04 PARTITION OF sales FOR VALUES FROM ('2026-04-01') TO ('2026-05-01');
+CREATE TABLE
+Time: 2.143 ms
+CREATE TABLE sales_2026_05 PARTITION OF sales FOR VALUES FROM ('2026-05-01') TO ('2026-06-01');
+CREATE TABLE
+Time: 2.292 ms
+INSERT INTO sales SELECT id, sold_at, region, amount FROM sales_flat;
+INSERT 0 1000000
+Time: 2567.512 ms (00:02.568)
+ANALYZE sales;
+ANALYZE
+Time: 771.885 ms
+ANALYZE sales_flat;
+ANALYZE
+Time: 144.332 ms
+\echo === NOT partitioned
+=== NOT partitioned
+EXPLAIN (ANALYZE, COSTS OFF) SELECT count(*) FROM sales_flat WHERE sold_at BETWEEN '2026-03-01' AND '2026-03-31';
+                                            QUERY PLAN                                             
+---------------------------------------------------------------------------------------------------
+ Finalize Aggregate (actual time=46.405..51.551 rows=1 loops=1)
+   ->  Gather (actual time=46.250..51.542 rows=3 loops=1)
+         Workers Planned: 2
+         Workers Launched: 2
+         ->  Partial Aggregate (actual time=39.335..39.336 rows=1 loops=3)
+               ->  Parallel Seq Scan on sales_flat (actual time=0.022..35.264 rows=68892 loops=3)
+                     Filter: ((sold_at >= '2026-03-01'::date) AND (sold_at <= '2026-03-31'::date))
+                     Rows Removed by Filter: 264441
+ Planning Time: 0.283 ms
+ Execution Time: 51.605 ms
+(10 rows)
+
+Time: 52.995 ms
+\echo === partitioned, pruning
+=== partitioned, pruning
+EXPLAIN (ANALYZE, COSTS OFF) SELECT count(*) FROM sales WHERE sold_at BETWEEN '2026-03-01' AND '2026-03-31';
+                                                 QUERY PLAN                                                 
+------------------------------------------------------------------------------------------------------------
+ Finalize Aggregate (actual time=29.688..33.129 rows=1 loops=1)
+   ->  Gather (actual time=29.509..33.122 rows=2 loops=1)
+         Workers Planned: 1
+         Workers Launched: 1
+         ->  Partial Aggregate (actual time=26.379..26.380 rows=1 loops=2)
+               ->  Parallel Seq Scan on sales_2026_03 sales (actual time=0.023..20.286 rows=103338 loops=2)
+                     Filter: ((sold_at >= '2026-03-01'::date) AND (sold_at <= '2026-03-31'::date))
+ Planning Time: 0.452 ms
+ Execution Time: 33.177 ms
+(9 rows)
+
+Time: 34.177 ms
+\echo === attach and detach
+=== attach and detach
+CREATE TABLE sales_2026_06 (LIKE sales);
+CREATE TABLE
+Time: 2.421 ms
+INSERT INTO sales_2026_06 VALUES (1, '2026-06-15', 'r1', 10.00);
+INSERT 0 1
+Time: 0.820 ms
+ALTER TABLE sales ATTACH PARTITION sales_2026_06 FOR VALUES FROM ('2026-06-01') TO ('2026-07-01');
+ALTER TABLE
+Time: 1.124 ms
+SELECT count(*) FROM sales WHERE sold_at >= '2026-06-01';
+ count 
+-------
+     1
+(1 row)
+
+Time: 0.510 ms
+ALTER TABLE sales DETACH PARTITION sales_2026_06;
+ALTER TABLE
+Time: 0.673 ms
+SELECT count(*) FROM sales WHERE sold_at >= '2026-06-01';
+ count 
+-------
+     0
+(1 row)
+
+Time: 0.251 ms
+\echo === statistics test
+=== statistics test
+DROP TABLE IF EXISTS addr;
+NOTICE:  table "addr" does not exist, skipping
+DROP TABLE
+Time: 0.285 ms
+CREATE TABLE addr (id int, city text, zip text);
+CREATE TABLE
+Time: 2.189 ms
+INSERT INTO addr SELECT g, 'city' || (g % 100), 'zip' || (g % 100) FROM generate_series(1,200000) g;
+INSERT 0 200000
+Time: 548.196 ms
+ANALYZE addr;
+ANALYZE
+Time: 257.066 ms
+\echo === estimate BEFORE extended statistics
+=== estimate BEFORE extended statistics
+EXPLAIN SELECT * FROM addr WHERE city = 'city7' AND zip = 'zip7';
+                               QUERY PLAN                               
+------------------------------------------------------------------------
+ Gather  (cost=1000.00..4023.51 rows=18 width=15)
+   Workers Planned: 1
+   ->  Parallel Seq Scan on addr  (cost=0.00..3021.71 rows=11 width=15)
+         Filter: ((city = 'city7'::text) AND (zip = 'zip7'::text))
+(4 rows)
+
+Time: 0.885 ms
+CREATE STATISTICS addr_city_zip (dependencies) ON city, zip FROM addr;
+CREATE STATISTICS
+Time: 1.730 ms
+ANALYZE addr;
+ANALYZE
+Time: 227.685 ms
+\echo === estimate AFTER extended statistics
+=== estimate AFTER extended statistics
+EXPLAIN SELECT * FROM addr WHERE city = 'city7' AND zip = 'zip7';
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Seq Scan on addr  (cost=0.00..4257.00 rows=2160 width=15)
+   Filter: ((city = 'city7'::text) AND (zip = 'zip7'::text))
+(2 rows)
+
+Time: 0.498 ms

@@ -1,0 +1,1 @@
+0 2 1 * * postgres /usr/pgsql-17/bin/psql -d plan_lab -c "SELECT drop_old_partitions(7);"
