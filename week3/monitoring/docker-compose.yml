@@ -1,0 +1,17 @@
+services:
+  exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter:v0.15.0
+    network_mode: host
+    env_file: exporter.env
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    network_mode: host
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+  grafana:
+    image: grafana/grafana:11.1.0
+    network_mode: host
+    volumes:
+      - grafana-data:/var/lib/grafana
+volumes:
+  grafana-data:
