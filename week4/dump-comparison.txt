@@ -1,0 +1,10 @@
+plain
+real	0m1.805s
+custom
+real	0m4.179s
+directory-4-jobs
+real	0m4.595s
+243M	/var/backups/pg/plain.sql
+15M	/var/backups/pg/custom.dump
+15M	/var/backups/pg/dir
+4.0K	/var/backups/pg/globals.sql
