@@ -1,0 +1,20 @@
+NOTICE:  table "important" does not exist, skipping
+DROP TABLE
+CREATE TABLE
+INSERT 0 1000
+INSERT 0 500
+2026-11-17 17:35:21.803638+02
+DROP TABLE
+ pg_switch_wal 
+---------------
+ 1/4F01C268
+(1 row)
+
+5
+waiting for server to start........................ done
+server started
+ count 
+-------
+  1500
+(1 row)
+
